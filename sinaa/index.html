@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصمم الشهادات - Certificate Designer</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webfont/1.6.28/webfontloader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+<div id="app">
+  <header id="toolbar">
+    <div class="toolbar-left">
+      <span class="brand-mark">صِنعة</span>
+      <span class="toolbar-sep">|</span>
+      <button id="langToggle" class="btn btn-sm" data-i18n="lang_toggle">English</button>
+      <span class="toolbar-sep">|</span>
+      <button id="undoBtn" class="btn btn-sm">↩</button>
+      <button id="redoBtn" class="btn btn-sm">↪</button>
+      <span class="toolbar-sep">|</span>
+      <button id="zoomOut" class="btn btn-sm">−</button>
+      <span id="zoomLevel">100%</span>
+      <button id="zoomIn" class="btn btn-sm">+</button>
+      <span class="toolbar-sep">|</span>
+      <span id="pageInfo" style="display:none"></span>
+    </div>
+    <div class="toolbar-right">
+      <button id="generateBtn" class="btn btn-success btn-sm" data-i18n="generate_all">⚡ إنشاء الكل</button>
+      <span class="toolbar-sep">|</span>
+      <button id="exportPng" class="btn btn-primary btn-sm" data-i18n="export_png">⬇ PNG</button>
+      <button id="exportPdf" class="btn btn-primary btn-sm" data-i18n="export_pdf">⬇ PDF</button>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside id="sidebar">
+      <section id="certUpload" class="panel">
+        <h3 class="panel-title" data-i18n="upload_cert">📄 رفع الشهادة</h3>
+        <div class="dropzone" id="certDropzone">
+          <div class="dropzone-text" data-i18n="dropzone">اسحب الملف هنا أو انقر للاختيار</div>
+          <input type="file" id="certInput" accept=".pdf,.png,.jpg,.jpeg,.webp" class="file-input">
+        </div>
+        <div id="certStatus" class="status-msg"></div>
+      </section>
+
+      <section id="dataUpload" class="panel">
+        <h3 class="panel-title" data-i18n="upload_data">📊 رفع البيانات</h3>
+        <div class="dropzone" id="dataDropzone">
+          <div class="dropzone-text" data-i18n="dropzone">اسحب الملف هنا أو انقر للاختيار</div>
+          <input type="file" id="dataInput" accept=".csv,.xlsx,.xls" class="file-input">
+        </div>
+        <div id="dataStatus" class="status-msg"></div>
+
+        <div id="dataPreview" style="display:none">
+          <div id="columnSelector">
+            <label class="control-label" data-i18n="select_column">اختر العمود للعرض:</label>
+            <select id="previewColumn" class="field-select"></select>
+          </div>
+          <table id="previewTable">
+            <thead><tr id="previewHeader"></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="imagesSection" class="panel">
+        <h3 class="panel-title" data-i18n="images">🖼️ الصور والطوابع</h3>
+        <div class="dropzone" id="imageDropzone">
+          <div class="dropzone-text" data-i18n="image_dropzone">اسحب الصورة هنا أو انقر للاختيار</div>
+          <input type="file" id="imageInput" accept=".png,.jpg,.jpeg,.gif,.webp" class="file-input" multiple>
+        </div>
+        <div id="imageStatus" class="status-msg"></div>
+        <div id="imagesList"></div>
+      </section>
+
+      <section id="fieldsSection" class="panel">
+        <div class="panel-header-actions">
+          <h3 class="panel-title" data-i18n="fields">✏️ الحقول</h3>
+          <button id="addField" class="btn btn-primary btn-sm" data-i18n="add_field">+ إضافة</button>
+        </div>
+        <div id="fieldsList"></div>
+        <div id="noFields" class="empty-msg" data-i18n="no_fields">لم يتم إضافة حقول بعد. أضف حقولاً لربطها ببياناتك.</div>
+        <div id="fontUploadRow">
+          <button id="uploadFontBtn" class="btn btn-sm btn-outline" data-i18n="upload_font">🔤 رفع خط</button>
+          <input type="file" id="fontInput" accept=".ttf,.otf,.woff,.woff2" hidden>
+          <span id="fontStatus"></span>
+        </div>
+      </section>
+    </aside>
+
+    <main id="canvasArea">
+      <div id="canvasContainer">
+        <div id="canvasPlaceholder" class="placeholder-msg">
+          <div class="placeholder-icon">🖼️</div>
+          <div data-i18n="no_cert">قم برفع شهادة للبدء</div>
+        </div>
+        <canvas id="certCanvas"></canvas>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="generateModal" class="modal" style="display:none">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 data-i18n="select_rows_title">اختيار الصفوف للإنشاء</h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-actions">
+        <button id="selectAllRows" class="btn btn-sm btn-outline" data-i18n="select_all">تحديد الكل</button>
+        <button id="deselectAllRows" class="btn btn-sm btn-outline" data-i18n="deselect_all">إلغاء التحديد</button>
+        <span id="rowCount" class="row-count">0 / 0</span>
+      </div>
+      <div id="rowTableWrap">
+        <table id="rowTable">
+          <thead><tr id="selectionHeader"></tr></thead>
+          <tbody id="selectionBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="cancelGenerate" class="btn btn-sm" data-i18n="cancel">إلغاء</button>
+      <button id="startGenerate" class="btn btn-success btn-sm" data-i18n="generate_count">
+        ⚡ إنشاء (0)
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="progressModal" class="modal" style="display:none">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <h3 data-i18n="generating">جاري الإنشاء...</h3>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:32px">
+      <div id="progressBarWrap">
+        <div id="progressBar"></div>
+      </div>
+      <div id="progressText" style="margin-top:12px;color:#8B7E6B;font-size:14px">0 / 0</div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
