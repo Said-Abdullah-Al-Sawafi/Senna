@@ -65,7 +65,7 @@
       select_rows_title: 'اختيار الصفوف للإنشاء',
       select_all: 'تحديد الكل',
       deselect_all: 'إلغاء التحديد',
-      generate_count: '⚡ إنشاء ({n})',
+      generate_count: 'إنشاء ({n})',
       generating: 'جاري الإنشاء...',
       cancel: 'إلغاء',
       no_rows_sel: 'الرجاء اختيار صف واحد على الأقل',
@@ -76,19 +76,20 @@
       save_file: 'حفظ الملف',
       saving: 'جاري الحفظ...',
       generate_all_title: 'إنشاء الشهادات',
-      images: '🖼️ الصور والطوابع',
+      images: 'الصور والطوابع',
       image_dropzone: 'اسحب الصورة هنا أو انقر للاختيار',
       image_added: '✓ تم إضافة الصورة',
       delete_image: 'حذف',
-      upload_font: '🔤 رفع خط',
+      upload_font: 'رفع خط',
       font_uploaded: '✓ تم رفع الخط',
       font_error: 'خطأ في رفع الخط',
       bold: 'B',
       italic: 'I',
       underline: 'U',
-      align_left: '≡',
-      align_center: '≡',
-      align_right: '≡',
+      align_left: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="2" y1="5" x2="9" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="2" y1="11" x2="7" y2="11"/></svg>',
+      align_center: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="3.5" y1="5" x2="10.5" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="4" y1="11" x2="10" y2="11"/></svg>',
+      align_right: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="5" y1="5" x2="12" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="7" y1="11" x2="12" y2="11"/></svg>',
+      trash_icon: '<svg class="icon icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10M12 4.5v8a1.5 1.5 0 01-1.5 1.5h-5A1.5 1.5 0 014 12.5v-8M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M6.5 7v4M9.5 7v4"/></svg>',
       bring_forward: '▲',
       send_backward: '▼',
       undo: '↩ تراجع',
@@ -126,7 +127,7 @@
       select_rows_title: 'Select Rows to Generate',
       select_all: 'Select All',
       deselect_all: 'Deselect All',
-      generate_count: '⚡ Generate ({n})',
+      generate_count: 'Generate ({n})',
       generating: 'Generating...',
       cancel: 'Cancel',
       no_rows_sel: 'Please select at least one row',
@@ -137,19 +138,20 @@
       save_file: 'Save file',
       saving: 'Saving...',
       generate_all_title: 'Generate Certificates',
-      images: '🖼️ Images & Stamps',
+      images: 'Images & Stamps',
       image_dropzone: 'Drop image here or click to select',
       image_added: '✓ Image added',
       delete_image: 'Delete',
-      upload_font: '🔤 Upload Font',
+      upload_font: 'Upload Font',
       font_uploaded: '✓ Font uploaded',
       font_error: 'Font upload error',
       bold: 'B',
       italic: 'I',
       underline: 'U',
-      align_left: '≡',
-      align_center: '≡',
-      align_right: '≡',
+      align_left: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="2" y1="5" x2="9" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="2" y1="11" x2="7" y2="11"/></svg>',
+      align_center: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="3.5" y1="5" x2="10.5" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="4" y1="11" x2="10" y2="11"/></svg>',
+      align_right: '<svg class="icon icon-sm" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="2"/><line x1="5" y1="5" x2="12" y2="5"/><line x1="2" y1="8" x2="12" y2="8"/><line x1="7" y1="11" x2="12" y2="11"/></svg>',
+      trash_icon: '<svg class="icon icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10M12 4.5v8a1.5 1.5 0 01-1.5 1.5h-5A1.5 1.5 0 014 12.5v-8M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M6.5 7v4M9.5 7v4"/></svg>',
       bring_forward: '▲',
       send_backward: '▼',
       undo: '↩ Undo',
@@ -237,6 +239,7 @@
     els.progressModal = $('#progressModal');
     els.progressBar = $('#progressBar');
     els.progressText = $('#progressText');
+    els.darkModeToggle = $('#darkModeToggle');
   }
 
   function t(key, vars) {
@@ -253,9 +256,12 @@
       el.textContent = t(key, vars);
     });
     els.langToggle.textContent = t('lang_toggle');
-    els.exportPng.textContent = '⬇ ' + t('export_png');
-    els.exportPdf.textContent = '⬇ ' + t('export_pdf');
-    els.generateBtn.textContent = '⚡ ' + t('generate_all');
+    const pngSpan = els.exportPng.querySelector('[data-i18n]');
+    if (pngSpan) pngSpan.textContent = t('export_png');
+    const pdfSpan = els.exportPdf.querySelector('[data-i18n]');
+    if (pdfSpan) pdfSpan.textContent = t('export_pdf');
+    const genSpan = els.generateBtn.querySelector('[data-i18n]');
+    if (genSpan) genSpan.textContent = t('generate_all');
   }
 
   function setLanguage(l) {
@@ -667,7 +673,7 @@
           <div class="field-header-btns">
             <button class="field-layer-btn" data-action="forward" data-field-id="${f.id}" title="${t('bring_forward')}">${t('bring_forward')}</button>
             <button class="field-layer-btn" data-action="backward" data-field-id="${f.id}" title="${t('send_backward')}">${t('send_backward')}</button>
-            <button class="field-delete" data-field-id="${f.id}">🗑</button>
+            <button class="field-delete" data-field-id="${f.id}">${t('trash_icon')}</button>
           </div>
         </div>
         <div class="field-controls">
@@ -1066,7 +1072,7 @@
         <div class="image-item-actions">
           <button class="image-layer-btn" data-action="forward" data-overlay-id="${o.id}" title="${t('bring_forward')}">${t('bring_forward')}</button>
           <button class="image-layer-btn" data-action="backward" data-overlay-id="${o.id}" title="${t('send_backward')}">${t('send_backward')}</button>
-          <button class="image-delete" data-overlay-id="${o.id}">🗑</button>
+          <button class="image-delete" data-overlay-id="${o.id}">${t('trash_icon')}</button>
         </div>
       `;
       div.querySelectorAll('.image-layer-btn').forEach(btn => {
@@ -1549,6 +1555,19 @@
     });
 
     loadGoogleFonts(FONTS.filter(f => f.type === 'google'));
+
+    const savedTheme = localStorage.getItem('sinaa-theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    if (els.darkModeToggle) {
+      els.darkModeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('sinaa-theme', newTheme);
+      });
+    }
 
     let resizeTimer;
     window.addEventListener('resize', () => {
