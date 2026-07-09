@@ -3,6 +3,9 @@
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+  const SNAPSHOT_KEY = 'senna-project-v1';
+  let _autoSaveTimer = null;
+
   const FONTS = [
     { name: 'TufuliArabic', value: 'TufuliArabic', type: 'local' },
     { name: 'Amiri', value: 'Amiri', type: 'google' },
@@ -39,7 +42,12 @@
       upload_data: 'رفع البيانات',
       fields: 'الحقول',
       add_field: 'إضافة حقل',
-      field_n: 'الحقل {n}',
+      elements: 'العناصر',
+      add_text: '+ نص',
+      text_label: 'النص',
+      text_placeholder: 'اكتب النص هنا...',
+      static_text: 'نص',
+      recipient: 'المستفيد',
       column: 'العمود',
       font: 'الخط',
       size: 'الحجم',
@@ -101,7 +109,12 @@
       upload_data: 'Upload Data',
       fields: 'Fields',
       add_field: 'Add Field',
-      field_n: 'Field {n}',
+      elements: 'Elements',
+      add_text: '+ Text',
+      text_label: 'Text',
+      text_placeholder: 'Type text here...',
+      static_text: 'Text',
+      recipient: 'Recipient',
       column: 'Column',
       font: 'Font',
       size: 'Size',
@@ -175,6 +188,7 @@
 
     dataHeaders: [],
     dataRows: [],
+    previewRowIndex: 0,
 
     fields: [],
     fieldCounter: 0,
@@ -217,6 +231,7 @@
     els.imageDropzone = $('#imageDropzone');
     els.imageStatus = $('#imageStatus');
     els.imagesList = $('#imagesList');
+    els.addText = $('#addText');
     els.addField = $('#addField');
     els.fieldsList = $('#fieldsList');
     els.noFields = $('#noFields');
@@ -240,6 +255,10 @@
     els.progressBar = $('#progressBar');
     els.progressText = $('#progressText');
     els.darkModeToggle = $('#darkModeToggle');
+    els.rowNav = $('#rowNav');
+    els.navPrev = $('#navPrev');
+    els.navNext = $('#navNext');
+    els.navInfo = $('#navInfo');
   }
 
   function t(key, vars) {
@@ -262,6 +281,8 @@
     if (pdfSpan) pdfSpan.textContent = t('export_pdf');
     const genSpan = els.generateBtn.querySelector('[data-i18n]');
     if (genSpan) genSpan.textContent = t('generate_all');
+    // Add Text button: data-i18n lives only on its inner span, so the generic
+    // loop above already updates it while preserving the leading SVG icon.
   }
 
   function setLanguage(l) {
@@ -416,11 +437,13 @@
     state.fieldCounter = 0;
     state.selectedFieldId = null;
     state.overlayImages = [];
+    state.previewRowIndex = 0;
     els.fieldsList.innerHTML = '';
     els.imagesList.innerHTML = '';
     els.imageStatus.textContent = '';
     els.imageStatus.className = 'status-msg';
     els.noFields.style.display = '';
+    if (els.rowNav) els.rowNav.style.display = 'none';
 
     showCanvas();
     initFabricCanvas();
@@ -499,6 +522,9 @@
       els.dataStatus.textContent = t('data_ok', { rows: state.dataRows.length });
       els.dataStatus.className = 'status-msg success';
       updateFieldColumnOptions();
+      // Reset preview to first row and reflect it on any existing data fields.
+      if (state.fields.some(f => f.type !== 'static')) applyPreviewRow(0);
+      else updateNavigator();
       popup(t('data_ok', { rows: state.dataRows.length }));
     } catch (e) {
       console.error(e);
@@ -582,6 +608,38 @@
     });
   }
 
+  /* ===== ROW PREVIEW NAVIGATION ===== */
+  /* Step through recipients live in the canvas. Updates every DATA field's
+     text to the value at `idx`; static fields are left untouched. */
+  function applyPreviewRow(idx) {
+    if (!state.dataRows.length) return;
+    idx = Math.max(0, Math.min(idx, state.dataRows.length - 1));
+    state.previewRowIndex = idx;
+    if (canvas) {
+      for (const field of state.fields) {
+        if (field.type === 'static') continue;
+        const val = (state.dataRows[idx][field.colIdx] !== undefined)
+          ? String(state.dataRows[idx][field.colIdx]) : '';
+        field.textObj.set('text', val);
+      }
+      canvas.renderAll();
+    }
+    updateNavigator();
+  }
+
+  function updateNavigator() {
+    if (!state.dataRows.length || !state.fields.some(f => f.type !== 'static')) {
+      els.rowNav.style.display = 'none';
+      return;
+    }
+    els.rowNav.style.display = '';
+    const n = state.dataRows.length;
+    const cur = state.previewRowIndex + 1;
+    els.navInfo.textContent = t('recipient') + ' ' + cur + ' / ' + n;
+    els.navPrev.disabled = state.previewRowIndex <= 0;
+    els.navNext.disabled = state.previewRowIndex >= n - 1;
+  }
+
   /* ===== FIELDS ===== */
   function addField() {
     if (!state.dataHeaders.length) {
@@ -591,7 +649,8 @@
     const id = 'field_' + (state.fieldCounter++);
     const colIdx = state.fields.length < state.dataHeaders.length ? state.fields.length : 0;
     const colName = state.dataHeaders[colIdx] || t('column') + ' ' + (colIdx + 1);
-    const sampleText = state.dataRows.length > 0 ? (state.dataRows[0][colIdx] || '').toString() : '';
+    const sampleRow = state.dataRows[state.previewRowIndex] || state.dataRows[0];
+    const sampleText = sampleRow ? (sampleRow[colIdx] || '').toString() : '';
 
     if (!canvas) {
       popup(lang === 'ar' ? 'الرجاء رفع شهادة أولاً' : 'Please upload a certificate first', 2000);
@@ -628,7 +687,7 @@
     canvas.renderAll();
 
     const field = {
-      id, colIdx, colName, sampleText,
+      id, type: 'data', colIdx, colName, sampleText,
       textObj,
       fontFamily: 'TufuliArabic',
       fontSize: fontSize,
@@ -644,6 +703,83 @@
     renderFieldsList();
     scrollToField(id);
     els.noFields.style.display = 'none';
+    // If data is loaded, reflect the currently-previewed recipient on the
+    // new field and reveal the recipient navigator.
+    if (state.dataRows.length) applyPreviewRow(state.previewRowIndex);
+    saveState();
+  }
+
+  /* Add a manually-typed text element. Unlike data fields, this does NOT
+     require a data file — only a certificate on canvas. Styled identically
+     to data fields but reads from `field.text` instead of a data column. */
+  function addStaticText() {
+    if (!canvas) {
+      popup(lang === 'ar' ? 'الرجاء رفع شهادة أولاً' : 'Please upload a certificate first', 2000);
+      return;
+    }
+    const id = 'text_' + (state.fieldCounter++);
+    const text = lang === 'ar' ? 'النص' : 'Text';
+    const fontSize = 48;
+
+    const textObj = new fabric.Text(text, {
+      fontFamily: 'TufuliArabic',
+      fontSize: fontSize,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      underline: false,
+      textAlign: 'center',
+      fill: '#1a1a1a',
+      left: state.displayWidth / 2,
+      top: state.displayHeight / 2,
+      originX: 'center',
+      originY: 'center',
+      angle: 0,
+      fieldId: id,
+      selectable: true,
+      evented: true,
+      hasControls: false,
+      hasBorders: true,
+      cornerSize: 8,
+      padding: 8,
+      borderColor: '#D4A84B',
+      cornerColor: '#D4A84B',
+    });
+
+    canvas.add(textObj);
+    canvas.setActiveObject(textObj);
+    canvas.renderAll();
+
+    const field = {
+      id, type: 'static', text,
+      textObj,
+      fontFamily: 'TufuliArabic',
+      fontSize: fontSize,
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      underline: false,
+      textAlign: 'center',
+      fill: '#1a1a1a',
+      angle: 0,
+    };
+    state.fields.push(field);
+    state.selectedFieldId = id;
+    renderFieldsList();
+    scrollToField(id);
+    els.noFields.style.display = 'none';
+    saveState();
+  }
+
+  /* Update a static text field's content (typed by the user). */
+  function onFieldTextChange(id, value) {
+    const field = state.fields.find(f => f.id === id);
+    if (!field || field.type !== 'static') return;
+    field.text = value;
+    field.textObj.set('text', value);
+    canvas.renderAll();
+    const nameEl = document.querySelector(`.field-item[data-field-id="${id}"] .field-item-name`);
+    if (nameEl) {
+      nameEl.textContent = t('static_text') + ': ' + (value.length > 18 ? value.slice(0, 18) + '…' : value || t('text_placeholder'));
+    }
     saveState();
   }
 
@@ -667,20 +803,34 @@
       const div = document.createElement('div');
       div.className = 'field-item' + (f.id === state.selectedFieldId ? ' selected' : '');
       div.dataset.fieldId = f.id;
+
+      // Header + first control differ by type; everything else is shared.
+      const isStatic = f.type === 'static';
+      const headerName = isStatic
+        ? t('static_text') + ': ' + ((f.text || '').length > 18 ? f.text.slice(0, 18) + '…' : (f.text || t('text_placeholder')))
+        : `${t('field_n', { n: i + 1 })}: ${state.dataHeaders[f.colIdx] || ''}`;
+      const firstControl = isStatic
+        ? `<div class="control-row">
+            <label>${t('text_label')}</label>
+            <input type="text" class="field-text" data-field-id="${f.id}" value="${(f.text || '').replace(/"/g, '&quot;')}" placeholder="${t('text_placeholder')}">
+          </div>`
+        : `<div class="control-row">
+            <label>${t('column')}</label>
+            <select class="field-column" data-field-id="${f.id}"></select>
+          </div>`;
+
       div.innerHTML = `
         <div class="field-item-header">
-          <span class="field-item-name">${t('field_n', { n: i + 1 })}: ${state.dataHeaders[f.colIdx] || ''}</span>
+          <span class="field-item-name">${headerName}</span>
           <div class="field-header-btns">
+            <span class="field-type-tag${isStatic ? ' tag-static' : ' tag-data'}">${isStatic ? t('static_text') : t('column')}</span>
             <button class="field-layer-btn" data-action="forward" data-field-id="${f.id}" title="${t('bring_forward')}">${t('bring_forward')}</button>
             <button class="field-layer-btn" data-action="backward" data-field-id="${f.id}" title="${t('send_backward')}">${t('send_backward')}</button>
             <button class="field-delete" data-field-id="${f.id}">${t('trash_icon')}</button>
           </div>
         </div>
         <div class="field-controls">
-          <div class="control-row">
-            <label>${t('column')}</label>
-            <select class="field-column" data-field-id="${f.id}"></select>
-          </div>
+          ${firstControl}
           <div class="control-row">
             <label>${t('font')}</label>
             <select class="field-font" data-field-id="${f.id}"></select>
@@ -716,14 +866,22 @@
       `;
 
       const colSel = div.querySelector('.field-column');
-      state.dataHeaders.forEach((h, ci) => {
-        const opt = document.createElement('option');
-        opt.value = ci;
-        opt.textContent = h || t('column') + ' ' + (ci + 1);
-        if (ci === f.colIdx) opt.selected = true;
-        colSel.appendChild(opt);
-      });
-      colSel.addEventListener('change', () => onFieldColumnChange(f.id, parseInt(colSel.value)));
+      if (colSel) {
+        state.dataHeaders.forEach((h, ci) => {
+          const opt = document.createElement('option');
+          opt.value = ci;
+          opt.textContent = h || t('column') + ' ' + (ci + 1);
+          if (ci === f.colIdx) opt.selected = true;
+          colSel.appendChild(opt);
+        });
+        colSel.addEventListener('change', () => onFieldColumnChange(f.id, parseInt(colSel.value)));
+      }
+
+      // Static text: wire the text input instead of a column select.
+      const textInp = div.querySelector('.field-text');
+      if (textInp) {
+        textInp.addEventListener('input', () => onFieldTextChange(f.id, textInp.value));
+      }
 
       const fontSel = div.querySelector('.field-font');
       FONTS.forEach(fo => {
@@ -795,7 +953,8 @@
     const field = state.fields.find(f => f.id === id);
     if (!field) return;
     field.colIdx = colIdx;
-    const val = state.dataRows.length > 0 ? (state.dataRows[0][colIdx] || '').toString() : '';
+    const sampleRow = state.dataRows[state.previewRowIndex] || state.dataRows[0];
+    const val = sampleRow ? (sampleRow[colIdx] || '').toString() : '';
     field.sampleText = val;
     field.textObj.set('text', val);
     canvas.renderAll();
@@ -920,6 +1079,8 @@
     history.stack.push(json);
     if (history.stack.length > MAX_HISTORY) history.stack.shift();
     history.index = history.stack.length - 1;
+    // Piggyback project autosave on every canvas mutation.
+    autoSave();
   }
 
   function restoreCanvasFromJSON(jsonStr) {
@@ -1162,7 +1323,10 @@
 
     for (const field of state.fields) {
       const tobj = field.textObj;
-      const colVal = row[field.colIdx] !== undefined ? String(row[field.colIdx]) : '';
+      // Static fields read their own text; data fields read from the row.
+      const colVal = field.type === 'static'
+        ? (field.text || '')
+        : (row[field.colIdx] !== undefined ? String(row[field.colIdx]) : '');
       const x = tobj.left * sx;
       const y = tobj.top * sy;
       const size = Math.round(tobj.fontSize * s);
@@ -1448,8 +1612,11 @@
       return;
     }
 
-    const defaultName = (state.dataRows.length > 0 && state.fields.length > 0)
-      ? (state.dataRows[0][state.fields[0].colIdx] || '').toString().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') || 'certificate'
+    // Export the recipient currently shown in the preview (row 0 by default).
+    const previewRow = state.dataRows[state.previewRowIndex] || state.dataRows[0] || [];
+    const firstDataField = state.fields.find(f => f.type !== 'static');
+    const defaultName = (previewRow.length && firstDataField)
+      ? (previewRow[firstDataField.colIdx] || '').toString().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') || 'certificate'
       : 'certificate';
 
     const handle = await tryPickFileHandle(defaultName, format);
@@ -1457,7 +1624,7 @@
 
     try {
       await document.fonts.ready;
-      const offscreen = renderCertificateForRow(state.dataRows[0] || []);
+      const offscreen = renderCertificateForRow(previewRow);
       if (handle) {
         await writeToHandle(handle, offscreen, format);
       } else {
@@ -1494,6 +1661,226 @@
     if (!canvas) return;
     state.zoom = 1;
     applyZoom();
+  }
+
+  /* ===== PROJECT AUTOSAVE / RESTORE ===== */
+  /* Capture the full project as plain JSON so a tab reload restores work.
+     Fields store their fabric object's transform so positions survive. */
+  function serializeProject(includeBg) {
+    const fields = state.fields.map(f => {
+      const o = f.textObj || {};
+      return {
+        id: f.id,
+        type: f.type || 'data',
+        colIdx: f.colIdx,
+        colName: f.colName,
+        text: f.text != null ? f.text : (f.sampleText || ''),
+        fontFamily: f.fontFamily,
+        fontSize: f.fontSize,
+        fontWeight: f.fontWeight,
+        fontStyle: f.fontStyle,
+        underline: f.underline,
+        textAlign: f.textAlign,
+        fill: f.fill,
+        angle: f.angle,
+        // Live transform read from the fabric object (may differ from the
+        // nominal `angle`/`fontSize` after the user dragged it).
+        left: o.left != null ? o.left : (state.displayWidth / 2),
+        top: o.top != null ? o.top : (state.displayHeight / 2),
+      };
+    });
+    const overlays = state.overlayImages.map(o => {
+      const fo = o.fabricObj || {};
+      return {
+        id: o.id,
+        dataUrl: o.dataUrl,
+        origImgWidth: o.origImgWidth,
+        origImgHeight: o.origImgHeight,
+        left: fo.left != null ? fo.left : 0,
+        top: fo.top != null ? fo.top : 0,
+        scaleX: fo.scaleX != null ? fo.scaleX : 1,
+        scaleY: fo.scaleY != null ? fo.scaleY : 1,
+        angle: fo.angle || 0,
+      };
+    });
+    return {
+      v: 1,
+      cert: {
+        type: state.certType,
+        dataUrl: includeBg ? state.certDataUrl : null,
+        origWidth: state.origWidth,
+        origHeight: state.origHeight,
+        pdfPageNum: state.pdfPageNum,
+      },
+      displayWidth: state.displayWidth,
+      displayHeight: state.displayHeight,
+      dataHeaders: state.dataHeaders,
+      dataRows: state.dataRows,
+      previewRowIndex: state.previewRowIndex,
+      fields,
+      overlays,
+      lang,
+    };
+  }
+
+  /* Debounced write. On quota error, retry once without the (large)
+     background image so at least the design + data survive. */
+  function autoSave() {
+    if (!canvas || !state.certImage) return;
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(() => {
+      let snap = serializeProject(true);
+      try {
+        localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snap));
+      } catch (e) {
+        try {
+          snap = serializeProject(false);
+          localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snap));
+        } catch (e2) {
+          console.warn('Senna autosave failed (quota):', e2);
+        }
+      }
+    }, 500);
+  }
+
+  /* Rebuild the canvas + state from a saved snapshot. Called on init. */
+  async function restoreProject(snap) {
+    if (!snap || !snap.cert) return false;
+    const c = snap.cert;
+
+    // Reconstitute the certificate image. If the background dataUrl was
+    // stripped (quota fallback), we cannot restore visuals — bail out.
+    if (!c.dataUrl || !c.origWidth) return false;
+
+    state.certType = c.type || 'image';
+    state.certDataUrl = c.dataUrl;
+    state.origWidth = c.origWidth;
+    state.origHeight = c.origHeight;
+    state.pdfPageNum = c.pdfPageNum || 1;
+    state.pdfDoc = null;
+
+    const img = new Image();
+    img.src = c.dataUrl;
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    state.certImage = img;
+
+    state.displayWidth = snap.displayWidth || c.origWidth;
+    state.displayHeight = snap.displayHeight || c.origHeight;
+    state.dataHeaders = snap.dataHeaders || [];
+    state.dataRows = snap.dataRows || [];
+    state.fields = [];
+    state.fieldCounter = 0;
+    state.overlayImages = [];
+    state.previewRowIndex = snap.previewRowIndex || 0;
+
+    showCanvas();
+    initFabricCanvas();
+    history.stack = [];
+    history.index = -1;
+    setCanvasBackground();
+    els.canvasContainer.style.width = state.displayWidth + 'px';
+    els.canvasContainer.style.height = state.displayHeight + 'px';
+    updateZoomDisplay();
+    updatePageInfo();
+
+    // Ensure every google font referenced by a saved field is loaded before
+    // we recreate the text objects (otherwise the canvas renders fallback).
+    const googleFamilies = (snap.fields || [])
+      .filter(f => { const fo = FONTS.find(x => x.value === f.fontFamily); return fo && fo.type === 'google'; })
+      .map(f => FONTS.find(x => x.value === f.fontFamily));
+    if (googleFamilies.length) loadGoogleFonts(googleFamilies);
+    await document.fonts.ready;
+
+    // Recreate each text field at its saved transform.
+    for (const f of snap.fields || []) {
+      const textSrc = f.type === 'static'
+        ? (f.text != null ? f.text : '')
+        : (state.dataRows.length ? String(state.dataRows[state.previewRowIndex][f.colIdx] != null ? state.dataRows[state.previewRowIndex][f.colIdx] : '') : '');
+      const textObj = new fabric.Text(textSrc || ' ', {
+        fontFamily: f.fontFamily || 'TufuliArabic',
+        fontSize: f.fontSize || 48,
+        fontWeight: f.fontWeight || 'normal',
+        fontStyle: f.fontStyle || 'normal',
+        underline: !!f.underline,
+        textAlign: f.textAlign || 'center',
+        fill: f.fill || '#1a1a1a',
+        left: f.left != null ? f.left : state.displayWidth / 2,
+        top: f.top != null ? f.top : state.displayHeight / 2,
+        originX: 'center',
+        originY: 'center',
+        angle: f.angle || 0,
+        fieldId: f.id,
+        selectable: true, evented: true,
+        hasControls: false, hasBorders: true, cornerSize: 8, padding: 8,
+        borderColor: '#D4A84B', cornerColor: '#D4A84B',
+      });
+      canvas.add(textObj);
+      const field = {
+        id: f.id, type: f.type || 'data',
+        colIdx: f.colIdx, colName: f.colName, text: f.text,
+        sampleText: textSrc,
+        textObj,
+        fontFamily: f.fontFamily || 'TufuliArabic',
+        fontSize: f.fontSize || 48,
+        fontWeight: f.fontWeight || 'normal',
+        fontStyle: f.fontStyle || 'normal',
+        underline: !!f.underline,
+        textAlign: f.textAlign || 'center',
+        fill: f.fill || '#1a1a1a',
+        angle: f.angle || 0,
+      };
+      state.fields.push(field);
+      state.fieldCounter = Math.max(state.fieldCounter, parseInt(String(f.id).replace(/\D/g, ''), 10) + 1);
+    }
+
+    // Recreate each overlay image at its saved transform.
+    for (const o of snap.overlays || []) {
+      await new Promise((resolve) => {
+        const oImg = new Image();
+        oImg.onload = () => {
+          const fabricImg = new fabric.Image(oImg, {
+            left: o.left || 0,
+            top: o.top || 0,
+            scaleX: o.scaleX || 1,
+            scaleY: o.scaleY || 1,
+            angle: o.angle || 0,
+            overlayId: o.id,
+            selectable: true, evented: true,
+            hasControls: true, hasBorders: true, cornerSize: 8, padding: 8,
+            borderColor: '#B83A2A', cornerColor: '#B83A2A', transparentCorners: false,
+          });
+          canvas.add(fabricImg);
+          state.overlayImages.push({
+            id: o.id, fabricObj: fabricImg, dataUrl: o.dataUrl,
+            origImgWidth: o.origImgWidth, origImgHeight: o.origImgHeight,
+          });
+          resolve();
+        };
+        oImg.onerror = () => resolve();
+        oImg.src = o.dataUrl;
+      });
+    }
+
+    canvas.renderAll();
+
+    // Refresh UI to match restored state.
+    if (state.dataHeaders.length) {
+      populateColumnSelector();
+      updatePreviewTable(state.previewRowIndex);
+      els.dataStatus.textContent = t('data_ok', { rows: state.dataRows.length });
+      els.dataStatus.className = 'status-msg success';
+    }
+    renderFieldsList();
+    renderImagesList();
+    els.noFields.style.display = state.fields.length ? 'none' : '';
+    if (state.fields.length) {
+      els.dataPreview.style.display = '';
+      updateFieldColumnOptions();
+      if (state.fields.some(f => f.type !== 'static')) applyPreviewRow(state.previewRowIndex);
+      else updateNavigator();
+    }
+    saveState();
+    return true;
   }
 
   /* ===== EVENT BINDING ===== */
@@ -1542,13 +1929,25 @@
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
+      // Arrow keys step through recipients, but only when not typing in a field.
+      const tag = (e.target && e.target.tagName) || '';
+      const typing = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+      if (typing) return;
+      if (els.rowNav && els.rowNav.style.display !== 'none' && state.dataRows.length) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); applyPreviewRow(state.previewRowIndex - 1); }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); applyPreviewRow(state.previewRowIndex + 1); }
+      }
     });
     els.addField.addEventListener('click', addField);
+    if (els.addText) els.addText.addEventListener('click', addStaticText);
     els.zoomIn.addEventListener('click', zoomIn);
     els.zoomOut.addEventListener('click', zoomOut);
     els.exportPng.addEventListener('click', () => exportCertificate('png'));
     els.exportPdf.addEventListener('click', () => exportCertificate('pdf'));
     els.generateBtn.addEventListener('click', showGenerateModal);
+    // Recipient preview navigator (Phase 3).
+    if (els.navPrev) els.navPrev.addEventListener('click', () => applyPreviewRow(state.previewRowIndex - 1));
+    if (els.navNext) els.navNext.addEventListener('click', () => applyPreviewRow(state.previewRowIndex + 1));
     els.uploadFontBtn.addEventListener('click', () => els.fontInput.click());
     els.fontInput.addEventListener('change', (e) => {
       if (e.target.files[0]) handleFontUpload(e.target.files[0]);
@@ -1585,6 +1984,24 @@
       }, 300);
     });
     window.__prevWinWidth = window.innerWidth;
+
+    // Restore the previous session's project (if any) from localStorage.
+    // Wrapped so a corrupt/empty snapshot never blocks the app from loading.
+    (async () => {
+      try {
+        const raw = localStorage.getItem(SNAPSHOT_KEY);
+        if (!raw) return;
+        const snap = JSON.parse(raw);
+        // Restore language first so restored UI text is localized correctly.
+        if (snap.lang && snap.lang !== lang) setLanguage(snap.lang);
+        const ok = await restoreProject(snap);
+        if (ok) {
+          popup(lang === 'ar' ? '✓ تمت استعادة مشروعك السابق' : '✓ Restored your previous project', 2500);
+        }
+      } catch (e) {
+        console.warn('Senna restore failed:', e);
+      }
+    })();
   }
 
   document.addEventListener('DOMContentLoaded', init);
