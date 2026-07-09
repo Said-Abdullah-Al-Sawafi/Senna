@@ -9,11 +9,16 @@
 - رفع الشهادات بصيغة PDF أو PNG أو JPG
 - رفع البيانات من CSV أو Excel
 - إضافة حقول نصية متعددة (الاسم، التاريخ، إلخ) ووضعها على الشهادة
+- إضافة عناصر نصية ثابتة (عناوين، تواريخ، أسطر توقيع) مع تحكم كامل بالخط واللون والحجم — دون الحاجة لملف بيانات
 - دعم الخطوط العربية (Google Fonts وخطوط مرفوعة يدوياً)
 - إضافة صور وطوابع فوق الشهادة
+- لوحة **العناصر** الموحدة للنصوص والصور والطوابع
+- معاينة حية صفحةً بصفحة — تنقّل بين المستفيدين قبل الإنشاء
 - معاينة فورية عبر قماشة تفاعلية
 - تصدير الشهادات بصيغة PNG أو PDF
 - إنشاء شهادات متعددة دفعة واحدة مع حفظها في ملف ZIP
+- حفظ تلقائي للمشروع في المتصفح — أغلق التبويب وعُد لاحقاً
+- الوضع الليلي
 - يدعم اللغتين العربية والإنجليزية
 - تصميم متجاوب مع جميع الأجهزة
 
@@ -46,11 +51,16 @@ A web-based tool for designing and batch-generating certificates. Upload a certi
 - Upload certificate templates in PDF, PNG, or JPG format
 - Import data from CSV or Excel files
 - Add multiple text fields (name, date, etc.) and position them on the certificate
+- Add static text elements (titles, dates, signature lines) with full font/color/size control — no data file required
 - Arabic font support (Google Fonts + custom uploads)
 - Overlay images and stamps on the certificate
+- Unified **Elements** panel for text + images & stamps
+- Row-by-row live preview — step through recipients before generating
 - Real-time preview on an interactive canvas
 - Export certificates as PNG or PDF
 - Batch-generate multiple certificates and save as ZIP
+- Automatic project saving to the browser — close the tab and resume later
+- Dark mode
 - Bilingual interface (Arabic / English)
 - Responsive design for all devices
 

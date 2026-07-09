@@ -135,6 +135,21 @@ html, body {
   line-height: 1;
 }
 
+/* All header/toolbar buttons get a white background with dark text/icons.
+   Scoped to #toolbar so sidebar buttons keep their own theming. */
+#toolbar .btn {
+  background: #fff;
+  color: #1E2A35;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+#toolbar .btn:hover {
+  background: #f0ede6;
+  border-color: rgba(255,255,255,0.35);
+}
+#toolbar .btn:active {
+  background: #e4e0d6;
+}
+
 /* ── MAIN LAYOUT ── */
 #main {
   display: flex;
@@ -339,6 +354,24 @@ html, body {
   font-size: 13px;
   color: var(--text-dark);
 }
+/* Small badge distinguishing static text from data-bound fields. */
+.field-type-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-inline-end: 2px;
+}
+.field-type-tag.tag-static {
+  background: rgba(212, 168, 75, 0.18);
+  color: var(--accent-gold-active, #B48B32);
+}
+.field-type-tag.tag-data {
+  background: rgba(74, 124, 89, 0.15);
+  color: var(--accent-success);
+}
 .field-header-btns {
   display: flex;
   gap: 2px;
@@ -441,7 +474,8 @@ html, body {
   flex-shrink: 0;
 }
 .control-row .field-column,
-.control-row .field-font {
+.control-row .field-font,
+.control-row .field-text {
   flex: 1;
   padding: 5px 28px 5px 8px;
   border: 1px solid var(--border-input);
@@ -456,8 +490,14 @@ html, body {
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
+.control-row .field-text {
+  cursor: text;
+  background-image: none;
+  padding-inline-end: 8px;
+}
 .control-row .field-column:focus,
-.control-row .field-font:focus {
+.control-row .field-font:focus,
+.control-row .field-text:focus {
   outline: none;
   border-color: var(--accent-gold);
   box-shadow: 0 0 0 2px rgba(212,168,75,0.15);
@@ -556,6 +596,49 @@ html, body {
   background: var(--bg-canvas);
   overflow: auto;
   padding: 24px;
+  position: relative;
+}
+
+/* Floating recipient navigator — sits at the top center of the canvas area. */
+.row-nav {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.row-nav .nav-arrow {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.row-nav .nav-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.row-nav .nav-info {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 72px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 #canvasContainer {
@@ -593,6 +676,30 @@ html, body {
 }
 
 /* ── IMAGES LIST ── */
+/* Elements panel: Add Text button sits above a labeled stamps section. */
+.add-text-btn {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.elements-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.elements-divider::before,
+.elements-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 #imagesList {
   display: flex;
   flex-direction: column;
@@ -1007,15 +1114,18 @@ html, body {
   }
 }
 
+/* In dark mode, header buttons stay white with dark text (they sit on the
+   always-dark toolbar), so override the generic dark-theme toolbar rule. */
+[data-theme="dark"] #toolbar .btn,
 [data-theme="dark"] .toolbar-center .btn-sm,
 [data-theme="dark"] .toolbar-left .btn-sm,
 [data-theme="dark"] .toolbar-right .btn-sm {
-  color: #ccc;
+  color: #1E2A35;
 }
 [data-theme="dark"] .toolbar-center .btn-sm:hover,
 [data-theme="dark"] .toolbar-left .btn-sm:hover,
 [data-theme="dark"] .toolbar-right .btn-sm:hover {
-  background: rgba(255,255,255,0.1);
+  background: #f0ede6;
 }
 [data-theme="dark"] #toolbar::after {
   opacity: 0.8;
