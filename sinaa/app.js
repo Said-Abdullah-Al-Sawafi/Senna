@@ -417,8 +417,12 @@
     const winH = window.innerHeight;
     if (winW < 640) {
       return { maxW: winW - 20, maxH: winH * 0.55 };
+    } else if (winW < 768) {
+      return { maxW: Math.min(900, winW - 260 - 40), maxH: winH - 80 };
     } else if (winW < 1024) {
-      return { maxW: Math.min(900, winW - 280 - 60), maxH: winH - 80 };
+      return { maxW: Math.min(900, winW - 260 - 40), maxH: winH - 100 };
+    } else if (winW < 1200) {
+      return { maxW: Math.min(900, winW - 300 - 60), maxH: winH - 100 };
     }
     return { maxW: Math.min(900, winW - 340 - 80), maxH: winH - 100 };
   }
