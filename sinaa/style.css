@@ -954,18 +954,83 @@ html, body {
 
 /* ── RESPONSIVE ── */
 
-/* Tablet */
-@media (max-width: 1023px) {
+/* Small desktop / large tablet landscape (1024-1199px) */
+@media (max-width: 1199px) and (min-width: 1024px) {
   #sidebar {
-    width: 280px;
-    min-width: 280px;
+    width: 300px;
+    min-width: 300px;
   }
   #canvasArea {
     padding: 16px;
   }
 }
 
-/* Mobile */
+/* Tablet (768-1023px) — 2-row toolbar, compact sidebar */
+@media (max-width: 1023px) {
+  #sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+  #canvasArea {
+    padding: 12px;
+  }
+
+  /* Toolbar: center row drops to its own line */
+  #toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 12px;
+  }
+  #toolbar::after {
+    inset-inline-start: 12px;
+    inset-inline-end: 12px;
+  }
+  .toolbar-center {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    padding: 4px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 2px;
+  }
+  /* RTL: override base order:0 so center drops below */
+  [dir="rtl"] .toolbar-left { order: 1; }
+  [dir="rtl"] .toolbar-center { order: 3; }
+  [dir="rtl"] .toolbar-right { order: 2; }
+  .toolbar-left .btn-sm,
+  .toolbar-right .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .toolbar-center .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .brand-mark {
+    font-size: 16px;
+  }
+  /* Hide pipe separators in collapsed center row */
+  .toolbar-center .toolbar-sep {
+    display: none;
+  }
+
+  /* Row navigator: slightly compact */
+  .row-nav {
+    top: 8px;
+    padding: 4px 6px;
+  }
+  .row-nav .nav-arrow {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  .row-nav .nav-info {
+    font-size: 11px;
+    min-width: 60px;
+  }
+}
+
+/* Large phone / small tablet portrait (480-767px) */
 @media (max-width: 767px) {
   html, body {
     overflow: auto;
@@ -975,43 +1040,72 @@ html, body {
     overflow: hidden;
   }
 
+  /* Toolbar: 2 compact rows */
   #toolbar {
     flex-wrap: wrap;
     gap: 4px;
-    padding: 6px 10px;
+    padding: 5px 8px;
+    overflow-x: auto;
   }
   #toolbar::after {
-    inset-inline-start: 10px;
-    inset-inline-end: 10px;
+    inset-inline-start: 8px;
+    inset-inline-end: 8px;
   }
   .toolbar-left, .toolbar-center, .toolbar-right {
     flex-wrap: wrap;
     gap: 4px;
   }
+  /* Row 1: brand, zoom (inline), undo/redo, dark mode */
+  .toolbar-left {
+    order: 1;
+    flex: 1 1 auto;
+  }
   .toolbar-center {
+    order: 2;
+    flex: 0 1 auto;
+    /* Zoom stays inline with brand row — don't drop to full width */
+  }
+  /* Row 2: generate, export buttons — pushed to the end */
+  .toolbar-right {
     order: 3;
     flex-basis: 100%;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    padding: 3px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
   }
+  /* RTL: override base order:0 */
+  [dir="rtl"] .toolbar-left { order: 1; }
+  [dir="rtl"] .toolbar-center { order: 2; }
+  [dir="rtl"] .toolbar-right { order: 3; flex-basis: 100%; justify-content: flex-end; }
   .toolbar-left .btn-sm,
   .toolbar-right .btn-sm,
   .toolbar-center .btn-sm {
-    padding: 3px 7px;
+    padding: 5px 8px;
     font-size: 12px;
+    min-height: 32px;
   }
   .brand-mark {
     font-size: 15px;
   }
+  /* Hide pipe separators for cleaner compact look */
+  .toolbar-center .toolbar-sep {
+    display: none;
+  }
+  .toolbar-right .toolbar-sep {
+    display: none;
+  }
 
+  /* Main: vertical stack, canvas on top */
   #main {
     flex-direction: column;
     overflow: hidden;
   }
 
+  /* Sidebar: full width, more space */
   #sidebar {
     width: 100%;
     min-width: 0;
-    max-height: 35vh;
+    max-height: 40vh;
     order: 2;
     border-inline-end: none;
     border-top: 1px solid var(--border);
@@ -1029,13 +1123,14 @@ html, body {
     padding-bottom: 8px;
   }
 
+  /* Canvas area */
   #canvasArea {
     flex: 1;
     min-height: 0;
     padding: 10px;
     order: 1;
+    overflow: auto;
   }
-
   #canvasContainer {
     max-width: 100%;
     max-height: 100%;
@@ -1058,6 +1153,23 @@ html, body {
     padding: 10px;
   }
 
+  /* Row navigator: compact */
+  .row-nav {
+    top: 6px;
+    padding: 3px 6px;
+    gap: 4px;
+  }
+  .row-nav .nav-arrow {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  .row-nav .nav-info {
+    font-size: 11px;
+    min-width: 56px;
+  }
+
+  /* Modals */
   .modal-content {
     width: 96%;
     border-radius: 8px;
@@ -1093,16 +1205,28 @@ html, body {
   }
 }
 
-/* Small phones */
-@media (max-width: 420px) {
+/* Small phones (< 480px) — icon-only toolbar buttons */
+@media (max-width: 479px) {
   #sidebar {
-    max-height: 30vh;
+    max-height: 40vh;
   }
   .toolbar-left .btn-sm,
   .toolbar-right .btn-sm,
   .toolbar-center .btn-sm {
-    padding: 2px 5px;
+    padding: 4px 6px;
     font-size: 11px;
+    min-height: 30px;
+  }
+  /* Hide text labels on export buttons — icons only */
+  #exportPng span,
+  #exportPdf span,
+  #generateBtn span {
+    display: none;
+  }
+  #exportPng .icon,
+  #exportPdf .icon,
+  #generateBtn .icon {
+    margin: 0;
   }
   #zoomLevel {
     min-width: 36px;
@@ -1111,6 +1235,15 @@ html, body {
   .panel {
     margin: 0 6px;
     padding: 8px 10px;
+  }
+  .panel-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+  /* Hide sidebar separators to save space */
+  .toolbar-left .toolbar-sep {
+    display: none;
   }
 }
 
