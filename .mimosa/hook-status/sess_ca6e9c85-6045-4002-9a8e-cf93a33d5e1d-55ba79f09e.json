@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mimosa-hook-status/v1",
+  "recordedAt": "2026-09-24T16:45:31.091Z",
+  "sessionId": "sess_ca6e9c85-6045-4002-9a8e-cf93a33d5e1d",
+  "event": "PostToolUse",
+  "toolName": "Write",
+  "file": "C:\\Users\\saida\\AppData\\Local\\Temp\\senna-font-test\\cleanup.ps1",
+  "outcome": "clear",
+  "coverage": "complete",
+  "findingCount": 0,
+  "durationMs": 5,
+  "hostState": "hook_complete",
+  "reportHint": ".mimosa/reports/"
+}

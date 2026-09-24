@@ -1253,6 +1253,27 @@
   }
 
   /* ===== CUSTOM FONT UPLOAD ===== */
+  /* Build a CSS-safe family name from a file name. Fabric.js writes the
+     family verbatim into the canvas font shorthand (and leaves it unquoted
+     when it contains a comma), so punctuation like the comma in Google's
+     "ReadexPro-VariableFont_HEXP,wght.ttf" naming makes the browser split
+     the family list and silently fall back to the default font. Keep only
+     letters and digits (Latin + Arabic) separated by single spaces. */
+  function cssSafeFontFamily(fileName) {
+    const family = fileName
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^A-Za-z0-9\u0600-\u06FF]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return family || 'CustomFont';
+  }
+
+  async function registerCustomFont(family, dataUrl) {
+    const fontFace = new FontFace(family, `url(${dataUrl})`);
+    await fontFace.load();
+    document.fonts.add(fontFace);
+  }
+
   function handleFontUpload(file) {
     const ext = file.name.split('.').pop().toLowerCase();
     if (!['ttf', 'otf', 'woff', 'woff2'].includes(ext)) {
@@ -1260,8 +1281,8 @@
       return;
     }
 
-    let fontFamily = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
-    if (!fontFamily) fontFamily = 'CustomFont';
+    const displayName = file.name.replace(/\.[^.]+$/, '').trim() || 'CustomFont';
+    const fontFamily = cssSafeFontFamily(file.name);
 
     const existing = FONTS.find(f => f.value === fontFamily);
     if (existing) {
@@ -1269,25 +1290,20 @@
       FONTS.splice(idx, 1);
     }
 
-    readFileAs(file, 'arraybuffer').then(async buf => {
-      const blob = new Blob([buf], { type: 'font/' + ext });
-      const blobUrl = URL.createObjectURL(blob);
-
+    readFileAs(file, 'dataurl').then(async dataUrl => {
       try {
-        const fontFace = new FontFace(fontFamily, `url(${blobUrl})`);
-        await fontFace.load();
-        document.fonts.add(fontFace);
+        await registerCustomFont(fontFamily, dataUrl);
 
-        FONTS.push({ name: fontFamily, value: fontFamily, type: 'custom' });
+        FONTS.push({ name: displayName, value: fontFamily, type: 'custom', dataUrl });
         refreshFontSelects();
         els.fontStatus.textContent = t('font_uploaded');
         els.fontStatus.className = 'status-msg success';
         popup(t('font_uploaded'), 1500);
+        saveState();
       } catch (e) {
         console.error(e);
         els.fontStatus.textContent = '❌ ' + t('font_error');
         els.fontStatus.className = 'status-msg error';
-        URL.revokeObjectURL(blobUrl);
       }
     }).catch(e => {
       console.error(e);
@@ -1716,6 +1732,9 @@
         origHeight: state.origHeight,
         pdfPageNum: state.pdfPageNum,
       },
+      customFonts: FONTS
+        .filter(f => f.type === 'custom' && f.dataUrl)
+        .map(f => ({ name: f.name, value: f.value, dataUrl: f.dataUrl })),
       displayWidth: state.displayWidth,
       displayHeight: state.displayHeight,
       dataHeaders: state.dataHeaders,
@@ -1786,6 +1805,18 @@
     els.canvasContainer.style.height = state.displayHeight + 'px';
     updateZoomDisplay();
     updatePageInfo();
+
+    // Re-register custom uploaded fonts (their FontFace objects are gone
+    // after a reload) before we recreate the text objects that use them.
+    await Promise.all((snap.customFonts || []).map(async cf => {
+      if (!cf.value || !cf.dataUrl || FONTS.some(f => f.value === cf.value)) return;
+      try {
+        await registerCustomFont(cf.value, cf.dataUrl);
+        FONTS.push({ name: cf.name || cf.value, value: cf.value, type: 'custom', dataUrl: cf.dataUrl });
+      } catch (e) {
+        console.warn('Senna: could not restore custom font', cf.value, e);
+      }
+    }));
 
     // Ensure every google font referenced by a saved field is loaded before
     // we recreate the text objects (otherwise the canvas renders fallback).
